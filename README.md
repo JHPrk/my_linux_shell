@@ -20,7 +20,7 @@ Custom Commands<br>
 - !! : Execute last commands executed
 
 # Debug Modes
-- To investigate flow of the codes, you set constant variable at line 14, DEBUG_MODE to 1 and run, default val : 0
+- To investigate flow of the codes, you set constant variable at line 15, DEBUG_MODE to 1 and run, default val : 0
 
 # Todo
 - Pipe instruction

@@ -7,8 +7,9 @@ codes are written in c
 # Commands
 - cd
 - other commands supported by execvp
-<br>
-Custom Commands
+
+Custom Commands<br>
+
 - history : Shows commands history up to HISTORY_SIZE
 - ! n : Execute nth history commands
 - !! : Execute last commands executed

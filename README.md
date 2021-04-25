@@ -2,12 +2,13 @@
 This custom shell only works in Linux System<br>
 It runs Linux system call such as execvp(), fork(), etc.<br>
 To execute this code in other Operation System such as Windows, Mac OS, you need to change OS dependent codes listed above.<br>
+Implementation is based on the book, Operation System Concepts Nineth Edition.
 
 # Compile In Linux
 Using gcc to compile the code <br>
 codes are written in c
-- gcc -o [compile_name] source_code
-- Run with ./compile_name
+- gcc -o [compile_name] [source_code]
+- Run with ./[compile_name]
 
 # Commands
 - cd

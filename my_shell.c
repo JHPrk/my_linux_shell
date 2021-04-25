@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -11,6 +12,8 @@
 #define MAX_LINE 80
 #define MAX_PATH 60
 #define HISTORY_SIZE 10
+#define DEBUG_MODE 0
+#define LOG_SIZE 200
 
 int interpret_command(char **args, int *pipe_index, int *is_background, char *readline, int *read_start);
 int fork_and_run(char **args, int *pipe_index, int *is_background, char *readline, int *read_start, int args_num);
@@ -18,7 +21,7 @@ void run_commands(char* command, char **args);
 void print_args(char **args, int args_num);
 void history_push_back(char* line);
 char* get_history_data(int index);
-void print_args(char **args, int args_num);
+void debug_log(const char *format, ... );
 
 // history 구조체. 실행한 명령어를 HISTORY_SIZE의 크기만큼 저장하는 circular queue이다.
 struct history_queue
@@ -54,13 +57,13 @@ int main(void)
         // get commands by line
         fgets(readline, MAX_LINE, stdin);
         read_start = 0;
-        printf("line : %s\n", readline);
+        debug_log("line : %s\n", readline);
 
         // intrepreting line -> args**형식으로 execvp에 맞는 인수 형태로 바꾸어준다.
         args_num = interpret_command(args, &pipe_index, &is_background, readline, &read_start);
         for(int i = 0; i < args_num; i++)
         {
-            printf("args %d : %s\n", i, args[i]);
+            debug_log("args %d : %s\n", i, args[i]);
         }
 
         // exit, quit 명령어일 경우 종료
@@ -102,7 +105,19 @@ int main(void)
     }
     return 0;
 }
-
+void debug_log(const char *format, ... )
+{
+    if(DEBUG_MODE)
+    {
+        va_list ap;
+        va_start(ap, format);
+        char buf[LOG_SIZE];
+        int rc = vsnprintf(buf, LOG_SIZE, format, ap);
+        va_end(ap);
+        printf("%s",buf);
+    }
+}
+// History queue works as circular queue. 원형 큐는 내가 표현하고 싶은 큐의 크기보다 + 1개만큼의 공간을 할당해야함.
 void history_push_back(char* line)
 {
     history.queue[history.back] = line;
@@ -113,7 +128,7 @@ void history_push_back(char* line)
     }
     else
         history.data_len++;
-    printf("put history at %d, %s\n", history.back, line);
+    debug_log("put history at %d, %s\n", history.back, line);
     
 }
 char* get_history_data(int index)
@@ -122,6 +137,7 @@ char* get_history_data(int index)
         return NULL;
     return history.queue[(history.back+history.size - index)%history.size];
 }
+// History 명령어 처리
 void print_history()
 {
     for(int i = 0; i < history.data_len; i++)
@@ -129,22 +145,7 @@ void print_history()
         printf("%d %s",history.data_len - i, history.queue[(history.front+i)%history.size]);
     }
 }
-void print_args(char **args, int args_num)
-{
-    char *p = args[0];
-    for(int i = 0; i < 15; i++)
-    {
-        if(*p != '\0')    
-            printf("%c ",*p);
-        else
-            printf(" - i : %d\n", i);
-        *p++;
-    }
-    for(int i = 0; i < args_num; i++)
-    {
-        printf("args %d : %s\n", i, args[i]);
-    }
-}
+// fork하여 프로세스를 만들고 자식프로세스에서 command를 실행한다.
 int fork_and_run(char **args, int *pipe_index, int *is_background, char *readline, int *read_start, int args_num)
 {
     int pid = fork();
@@ -185,7 +186,7 @@ void run_commands(char* command, char **args)
             print_history();
             return;
         }
-        printf("get history at %s : %s\n", args[1], re_com);
+        debug_log("get history at %s : %s\n", args[1], re_com);
         int pipe_index = -1;
         int is_background = 0;
         int read_start = 0;
@@ -196,7 +197,7 @@ void run_commands(char* command, char **args)
     else if(strcmp(command,"!!") == 0)
     {
         char* re_com = get_history_data(1);
-        printf("get history at %d : %s\n", 1, re_com);
+        debug_log("get history at %d : %s\n", 1, re_com);
         int pipe_index = -1;
         int is_background = 0;
         int read_start = 0;
@@ -212,6 +213,7 @@ void run_commands(char* command, char **args)
     }
 
 }
+// line을 받아와서 execvp형태로 만들어주는 함수
 int interpret_command(char **args, int *pipe_index, int *is_background, char *readline, int *read_start)
 {
     char ch;
